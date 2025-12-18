@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Live Location Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background: #020617;
+      border-radius: 12px;
+      padding: 24px;
+      width: 340px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.4);
+    }
+    h2 { margin-top: 0; }
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: #2563eb;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:disabled { background: #475569; cursor: not-allowed; }
+    .info { margin-top: 16px; font-size: 14px; line-height: 1.6; }
+    .muted { color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Live Location</h2>
+    <p class="muted">Your browser will ask for permission.</p>
+    <button id="startBtn">Start Tracking</button>
+    <button id="stopBtn" disabled style="margin-top:10px;background:#dc2626;">Stop Tracking</button>
+
+    <div class="info" id="output">Status: Idle</div>
+  </div>
+
+  <script>
+    let watchId = null;
+
+    const output = document.getElementById('output');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+
+    function updatePosition(position) {
+      const { latitude, longitude, accuracy } = position.coords;
+      const time = new Date(position.timestamp).toLocaleTimeString();
+
+      output.innerHTML = `
+        <strong>Latitude:</strong> ${latitude}<br>
+        <strong>Longitude:</strong> ${longitude}<br>
+        <strong>Accuracy:</strong> ±${accuracy} meters<br>
+        <strong>Updated:</strong> ${time}
+      `;
+    }
+
+    function handleError(error) {
+      output.textContent = "Error: " + error.message;
+    }
+
+    startBtn.onclick = () => {
+      if (!navigator.geolocation) {
+        output.textContent = "Geolocation not supported.";
+        return;
+      }
+
+      watchId = navigator.geolocation.watchPosition(
+        updatePosition,
+        handleError,
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+      );
+
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      output.textContent = "Tracking started…";
+    };
+
+    stopBtn.onclick = () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+      }
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      output.textContent = "Tracking stopped.";
+    };
+  </script>
+</body>
+</html>
